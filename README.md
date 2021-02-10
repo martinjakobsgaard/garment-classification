@@ -2,6 +2,8 @@
 
 ## Setup of environment for machine learning
 
+This is based on a guide found [here](https://machinelearningmastery.com/setup-python-environment-machine-learning-deep-learning-anaconda/)
+
 ### 1. Install Anaconda [here](https://www.anaconda.com/products/individual)
 
 ### 2. Update Anaconda using
