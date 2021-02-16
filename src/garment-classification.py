@@ -1,4 +1,5 @@
-# save the final model to file
+# Garment classification python
+
 from keras.datasets import mnist
 from keras.utils import to_categorical
 from keras.models import Sequential
