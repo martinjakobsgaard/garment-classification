@@ -1,5 +1,6 @@
 # Garment classification python
 
+# Keras import
 from keras.datasets import mnist
 from keras.utils import to_categorical
 from keras.models import Sequential
@@ -9,17 +10,26 @@ from keras.layers import Dense
 from keras.layers import Flatten
 from keras.optimizers import SGD
 
+# Import of libraries
+import pandas as pd    
+
 # load train and test dataset
-def load_dataset():
+#def load_dataset():
 	# load dataset
-	(trainX, trainY), (testX, testY) = mnist.load_data()
+	#(trainX, trainY), (testX, testY) = mnist.load_data()
 	# reshape dataset to have a single channel
-	trainX = trainX.reshape((trainX.shape[0], 28, 28, 1))
-	testX = testX.reshape((testX.shape[0], 28, 28, 1))
+	#trainX = trainX.reshape((trainX.shape[0], 28, 28, 1))
+	#testX = testX.reshape((testX.shape[0], 28, 28, 1))
 	# one hot encode target values
-	trainY = to_categorical(trainY)
-	testY = to_categorical(testY)
-	return trainX, trainY, testX, testY
+	#trainY = to_categorical(trainY)
+	#testY = to_categorical(testY)
+	#return trainX, trainY, testX, testY
+
+# load data from images and csv file
+def load_dataset():
+	# load the data
+	train = pd.read_csv(../images/draft-dataset/labels.csv)
+	train_folder = ../images/draft-dataset/
 
 # scale pixels
 def prep_pixels(train, test):
@@ -31,6 +41,7 @@ def prep_pixels(train, test):
 	test_norm = test_norm / 255.0
 	# return normalized images
 	return train_norm, test_norm
+
 
 # define cnn model
 def define_model():
@@ -51,7 +62,7 @@ def define_model():
 # run the test harness for evaluating a model
 def run_test_harness():
 	# load dataset
-	trainX, trainY, testX, testY = load_dataset()
+	#trainX, trainY, testX, testY = load_dataset()
 	# prepare pixel data
 	trainX, testX = prep_pixels(trainX, testX)
 	# define model
