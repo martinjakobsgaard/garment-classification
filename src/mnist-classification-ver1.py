@@ -12,6 +12,13 @@ from keras.layers import Dense
 from keras.layers import Flatten
 from keras.optimizers import SGD
 
+import tensorflow.compat.v1 as tf
+
+gpu_devices = tf.config.experimental.list_physical_devices('GPU')
+for device in gpu_devices:
+    tf.config.experimental.set_memory_growth(device, True)
+
+
 # load train and test dataset
 def load_dataset():
 	# load dataset
@@ -60,7 +67,7 @@ def evaluate_model(dataX, dataY, n_folds=5):
 		# select rows for train and test
 		trainX, trainY, testX, testY = dataX[train_ix], dataY[train_ix], dataX[test_ix], dataY[test_ix]
 		# fit model
-		history = model.fit(trainX, trainY, epochs=10, batch_size=32, validation_data=(testX, testY), verbose=0)
+		history = model.fit(trainX, trainY, epochs=10, batch_size=16, validation_data=(testX, testY), verbose=0)
 		# evaluate model
 		_, acc = model.evaluate(testX, testY, verbose=0)
 		print('> %.3f' % (acc * 100.0))
