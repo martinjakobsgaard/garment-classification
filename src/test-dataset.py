@@ -5,7 +5,7 @@ from keras.preprocessing.image import ImageDataGenerator
 datagen = ImageDataGenerator()
 
 # prepare an iterators for each dataset
-train_it = datagen.flow_from_directory('../data/train/', class_mode='binary')
+train_it = datagen.flow_from_directory('../images/draft-dataset/', class_mode='binary')
 
 # confirm the iterator works
 batchX, batchy = train_it.next()

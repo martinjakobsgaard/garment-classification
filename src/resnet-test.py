@@ -1,8 +1,7 @@
-import matplotlib.pyplot as plt
-import numpy as np
-import tensorflow as tf
+# Garment classification python
 
-from tensorflow import keras
+# Keras import
+
 from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, ZeroPadding2D,\
      Flatten, BatchNormalization, AveragePooling2D, Dense, Activation, Add 
 from tensorflow.keras.models import Model
@@ -11,11 +10,10 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.regularizers import l2
 
-from sklearn.model_selection import train_test_split 
-
-from keras.preprocessing.image import ImageDataGenerator
-
 import tensorflow.compat.v1 as tf
+
+from keras.optimizers import SGD
+from keras.preprocessing.image import ImageDataGenerator
 
 gpu_devices = tf.config.experimental.list_physical_devices('GPU')
 for device in gpu_devices:
@@ -23,39 +21,13 @@ for device in gpu_devices:
 
 # create generator
 datagen = ImageDataGenerator()
-
 # load and iterate training dataset
-train_it = datagen.flow_from_directory('../images/dataset-1/train/',  color_mode='rgb', target_size=(100, 100), class_mode='sparse', batch_size=1200)
-test_it = datagen.flow_from_directory('../images/dataset-1/test/', color_mode='rgb', target_size=(100, 100), class_mode='sparse', batch_size=400)
+train_it = datagen.flow_from_directory('../images/dataset-1/train/',  color_mode='rgb', target_size=(100, 100), class_mode='categorical', batch_size=16)
+# load and iterate validation dataset
+val_it = datagen.flow_from_directory('../images/dataset-1/validation/', color_mode='rgb', target_size=(100, 100), class_mode='categorical', batch_size=16)
+# load and iterate test dataset
+test_it = datagen.flow_from_directory('../images/dataset-1/test/', color_mode='rgb', target_size=(100, 100), class_mode='categorical', batch_size=16)
 
-train_im, train_lab = train_it.next()
-test_im, test_lab = test_it.next()
-
-# Normalize the images to pixel values (0, 1)
-train_im, test_im = train_im/255.0 , test_im/255.0
-
-# Check the format of the data 
-print ("train_im, train_lab types: ", type(train_im), type(train_lab))
-
-# check the shape of the data
-print ("shape of images and labels array: ", train_im.shape, train_lab.shape) 
-print ("shape of images and labels array ; test: ", test_im.shape, test_lab.shape)
-
-# define class types
-class_types = ['assorted-garments-blue', 'assorted-garments-green', 'bed-linen-striped', 'bed-linen-yellow']
-
-# Convert to categoricals -_-
-print("Converting to categoricals...")
-train_lab_categorical = tf.keras.utils.to_categorical(train_lab, num_classes=4, dtype='uint8')
-test_lab_categorical = tf.keras.utils.to_categorical(test_lab, num_classes=4, dtype='uint8')
-
-
-# Split datasets
-print("Splitting datasets...")
-train_im, valid_im, train_lab, valid_lab = train_test_split(train_im, train_lab_categorical, test_size=0.20, 
-                                                            stratify=train_lab_categorical, 
-                                                            random_state=40, shuffle = True)
-# define batch size
 batch_size = 64 # try several values
 
 train_DataGen = tf.keras.preprocessing.image.ImageDataGenerator(zoom_range=0.1, 
@@ -65,8 +37,14 @@ train_DataGen = tf.keras.preprocessing.image.ImageDataGenerator(zoom_range=0.1,
  
 valid_datagen = tf.keras.preprocessing.image.ImageDataGenerator()
 
+train_im, train_lab = train_it.next()
+valid_im, valid_lab = val_it.next()
+
 train_set_conv = train_DataGen.flow(train_im, train_lab, batch_size=batch_size) # train_lab is categorical 
 valid_set_conv = valid_datagen.flow(valid_im, valid_lab, batch_size=batch_size) # so as valid_lab
+
+class_types = ['assorted-garments-blue', 'assorted-garments-green', 'bed-linen-striped', 'bed-linen-yellow']
+
 
 def res_identity(x, filters): 
 	''' renet block where dimension doesnot change.
@@ -130,9 +108,9 @@ def res_conv(x, s, filters):
 
 	return x
 
-### Combine the above functions to build 50 layers resnet. 
+# define cnn model
 def resnet50():
-	input_im = Input(shape=(train_im.shape[1], train_im.shape[2], train_im.shape[3])) # cifar 10 images size
+	input_im = Input(shape=(train_im.shape[1], train_im.shape[2], train_im.shape[3]))
 	x = ZeroPadding2D(padding=(3, 3))(input_im)
 
 	# 1st stage
@@ -183,90 +161,29 @@ def resnet50():
 
 	model = Model(inputs=input_im, outputs=x, name='Resnet50')
 
-	return model
-
-def earlystop(mode):
-	if mode=='acc':
-		estop = tf.keras.callbacks.EarlyStopping(monitor='val_acc', patience=15, mode='max')
-	elif mode=='loss':
-		estop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=15, mode='min')
-	return estop
-
-resnet50_model = resnet50()
-#resnet50_model.summary()
-
-resnet50_model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=1e-3), 
+	# compile model
+	model.compile(loss='categorical_crossentropy', optimizer=Adam(learning_rate=1e-3), 
                        metrics=['acc'])
 
-batch_size=batch_size
-print(batch_size)
-
-resnet_train = resnet50_model.fit(train_set_conv, 
-                                  epochs=120, 
+	resnet_train = model.fit(train_set_conv, 
+                                  epochs=160, 
                                   steps_per_epoch=train_im.shape[0]/batch_size, 
                                   validation_steps=valid_im.shape[0]/batch_size, 
                                   validation_data=valid_set_conv)
 
-resnet50_model.save('final_model.h5')
+	return model
 
-loss = resnet_train.history['loss']
-v_loss = resnet_train.history['val_loss']
+# run the test harness for evaluating a model
+def run_test_harness():
 
-acc = resnet_train.history['acc']
-v_acc = resnet_train.history['val_acc']
+	# define model
+	model = resnet50()
+	# fit model
+	model.fit_generator(train_it, steps_per_epoch=64, validation_data=val_it, validation_steps=8)
+	# evaluate model
+	loss = model.evaluate_generator(test_it, steps=16)
+	# save model
+	model.save('final_model.h5')
 
-epochs = range(len(loss))
-
-fig = plt.figure(figsize=(9, 5))
-plt.subplot(1, 2, 1)
-plt.yscale('log')
-plt.plot(epochs, loss, linestyle='--', linewidth=3, color='orange', alpha=0.7, label='Train Loss')
-plt.plot(epochs, v_loss, linestyle='-.', linewidth=2, color='lime', alpha=0.8, label='Valid Loss')
-plt.ylim(0.3, 100)
-plt.xlabel('Epochs', fontsize=11)
-plt.ylabel('Loss', fontsize=12)
-plt.legend(fontsize=12)
-plt.subplot(1, 2, 2)
-plt.plot(epochs, acc, linestyle='--', linewidth=3, color='orange', alpha=0.7, label='Train Acc')
-plt.plot(epochs, v_acc, linestyle='-.', linewidth=2, color='lime', alpha=0.8, label='Valid Acc') 
-plt.xlabel('Epochs', fontsize=11)
-plt.ylabel('Accuracy', fontsize=12)
-plt.legend(fontsize=12)
-plt.tight_layout()
-plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# entry point, run the test harness
+run_test_harness()
