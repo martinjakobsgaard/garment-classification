@@ -16,7 +16,7 @@ for device in gpu_devices:
 datagen = ImageDataGenerator()
 
 # load and iterate training dataset
-train_it = datagen.flow_from_directory('../images/dataset-2/train/',  color_mode='rgb', target_size=(100, 100), class_mode='sparse', batch_size=1200)
+train_it = datagen.flow_from_directory('../images/filtered-dataset/train/',  color_mode='rgb', target_size=(100, 100), class_mode='sparse', batch_size=1200)
 
 train_im, train_lab = train_it.next()
 
