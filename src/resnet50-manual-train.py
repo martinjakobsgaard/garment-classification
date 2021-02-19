@@ -69,33 +69,33 @@ train_set_conv = train_DataGen.flow(train_im, train_lab, batch_size=batch_size) 
 valid_set_conv = valid_datagen.flow(valid_im, valid_lab, batch_size=batch_size) # so as valid_lab
 
 def res_identity(x, filters): 
-	''' renet block where dimension doesnot change.
-	The skip connection is just simple identity conncection
-	we will have 3 blocks and then input will be added
-	'''
-	x_skip = x # this will be used for addition with the residual block 
-	f1, f2 = filters
+    ''' renet block where dimension doesnot change.
+        The skip connection is just simple identity conncection
+        we will have 3 blocks and then input will be added
+        '''
+    x_skip = x # this will be used for addition with the residual block 
+    f1, f2 = filters
 
-	#first block 
-	x = Conv2D(f1, kernel_size=(1, 1), strides=(1, 1), padding='valid', kernel_regularizer=l2(0.001))(x)
-	x = BatchNormalization()(x)
-	x = Activation(activations.relu)(x)
+    #first block 
+    x = Conv2D(f1, kernel_size=(1, 1), strides=(1, 1), padding='valid', kernel_regularizer=l2(0.001))(x)
+    x = BatchNormalization()(x)
+    x = Activation(activations.relu)(x)
 
-	#second block # bottleneck (but size kept same with padding)
-	x = Conv2D(f1, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=l2(0.001))(x)
-	x = BatchNormalization()(x)
-	x = Activation(activations.relu)(x)
+    #second block # bottleneck (but size kept same with padding)
+    x = Conv2D(f1, kernel_size=(3, 3), strides=(1, 1), padding='same', kernel_regularizer=l2(0.001))(x)
+    x = BatchNormalization()(x)
+    x = Activation(activations.relu)(x)
 
-	# third block activation used after adding the input
-	x = Conv2D(f2, kernel_size=(1, 1), strides=(1, 1), padding='valid', kernel_regularizer=l2(0.001))(x)
-	x = BatchNormalization()(x)
-	# x = Activation(activations.relu)(x)
+    # third block activation used after adding the input
+    x = Conv2D(f2, kernel_size=(1, 1), strides=(1, 1), padding='valid', kernel_regularizer=l2(0.001))(x)
+    x = BatchNormalization()(x)
+    # x = Activation(activations.relu)(x)
 
-	# add the input 
-	x = Add()([x, x_skip])
-	x = Activation(activations.relu)(x)
+    # add the input 
+    x = Add()([x, x_skip])
+    x = Activation(activations.relu)(x)
 
-	return x
+    return x
 
 def res_conv(x, s, filters):
 	'''
@@ -185,6 +185,25 @@ def resnet50():
 
 	return model
 
+### Define some Callbacks
+def lrdecay(epoch):
+    lr = 1e-3
+    if epoch > 180:
+        lr *= 0.5e-3
+    elif epoch > 160:
+        lr *= 1e-3
+    elif epoch > 120:
+        lr *= 1e-2
+    elif epoch > 80:
+        lr *= 1e-1
+    #print('Learning rate: ', lr)
+    return lr
+    # if epoch < 40:
+    #   return 0.01
+    # else:
+    #   return 0.01 * np.math.exp(0.03 * (40 - epoch))
+lrdecay = tf.keras.callbacks.LearningRateScheduler(lrdecay) # learning rate decay  
+
 def earlystop(mode):
 	if mode=='acc':
 		estop = tf.keras.callbacks.EarlyStopping(monitor='val_acc', patience=15, mode='max')
@@ -202,10 +221,11 @@ batch_size=batch_size
 print(batch_size)
 
 resnet_train = resnet50_model.fit(train_set_conv, 
-                                  epochs=120, 
+                                  epochs=160, 
                                   steps_per_epoch=train_im.shape[0]/batch_size, 
                                   validation_steps=valid_im.shape[0]/batch_size, 
-                                  validation_data=valid_set_conv)
+                                  validation_data=valid_set_conv,
+								  callbacks= [lrdecay])
 
-resnet50_model.save('final_model.h5')
+resnet50_model.save('../models/resnet50_manual_train.h5')
 
