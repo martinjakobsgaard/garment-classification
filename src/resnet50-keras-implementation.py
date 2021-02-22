@@ -91,7 +91,7 @@ resnet_train = model.fit(train_set_conv, batch_size=batch_size, epochs=300, verb
 
 model.summary()
 
-model.save('../models/Keras-res-net50-2.h5')
+model.save('../models/resnet-serving', save_format='tf')
 
 ### Plot train and validation curves
 print("Plotting data...")

@@ -39,7 +39,7 @@ datagen = ImageDataGenerator()
 to_res = (100, 100)
 batch_size = 64
 
-test_it = datagen.flow_from_directory('../images/dataset-2/test/', color_mode='rgb', target_size=(100, 100), class_mode='sparse', batch_size=400)
+test_it = datagen.flow_from_directory('../images/filtered-dataset/test/', color_mode='rgb', target_size=(100, 100), class_mode='sparse', batch_size=400)
 test_im, test_lab = test_it.next()
 
 test_im = test_im/255.0
