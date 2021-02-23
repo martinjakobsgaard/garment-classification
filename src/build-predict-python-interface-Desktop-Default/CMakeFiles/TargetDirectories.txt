@@ -1,3 +1,0 @@
-/home/inwatec/workspace/garment-classification/src/build-predict-python-interface-Desktop-Default/CMakeFiles/rebuild_cache.dir
-/home/inwatec/workspace/garment-classification/src/build-predict-python-interface-Desktop-Default/CMakeFiles/predict-python-interface.dir
-/home/inwatec/workspace/garment-classification/src/build-predict-python-interface-Desktop-Default/CMakeFiles/edit_cache.dir
