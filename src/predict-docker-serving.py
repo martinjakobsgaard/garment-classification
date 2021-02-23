@@ -14,17 +14,15 @@ gpu_devices = tf.config.experimental.list_physical_devices('GPU')
 for device in gpu_devices:
     tf.config.experimental.set_memory_growth(device, True)
 
-to_res = (100, 100)
+# to_res = (100, 100)
 
 url = 'http://localhost:8501/v1/models/resnet-serving:predict'
+
 
 # load and prepare the image
 def load_image(filename):
     # load the image
     img = load_img(filename, color_mode="rgb", target_size=(100, 100))
-
-    # img = load_img(filename, target_size=(640, 360))
-    # res = cv2.resize(img, dsize=(54, 140), interpolation=cv2.INTER_CUBIC)
     # convert to array
     input_arr = img_to_array(img)
     input_arr = np.array([input_arr])
@@ -47,12 +45,12 @@ def make_prediction(instances):
 # load an image and predict the class
 def run_example():
     # load the image
-    # input_arr = load_image('../images/validation/bed-linen-yellow/export_i0438_z1322.jpg')
     input_arr = load_image(str(sys.argv[1]))
 
     predictions = make_prediction(input_arr)
 
     labels = ["blue", "green", "striped", "yellow"]
+    print("\n")
     print(labels[np.argmax(predictions)])
 
 
