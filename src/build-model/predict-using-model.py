@@ -3,9 +3,6 @@ from keras.preprocessing.image import load_img
 from keras.preprocessing.image import img_to_array
 from keras.models import load_model
 
-import requests
-import json
-
 import numpy as np
 import sys
 import tensorflow as tf
@@ -14,15 +11,16 @@ gpu_devices = tf.config.experimental.list_physical_devices('GPU')
 for device in gpu_devices:
     tf.config.experimental.set_memory_growth(device, True)
 
-# to_res = (100, 100)
-
-url = 'http://localhost:8501/v1/models/resnet-serving:predict'
+to_res = (100, 100)
 
 
 # load and prepare the image
 def load_image(filename):
     # load the image
     img = load_img(filename, color_mode="rgb", target_size=(100, 100))
+
+    # img = load_img(filename, target_size=(640, 360))
+    # res = cv2.resize(img, dsize=(54, 140), interpolation=cv2.INTER_CUBIC)
     # convert to array
     input_arr = img_to_array(img)
     input_arr = np.array([input_arr])
@@ -34,24 +32,19 @@ def load_image(filename):
     return input_arr
 
 
-def make_prediction(instances):
-    data = json.dumps({"signature_name": "serving_default", "instances": instances.tolist()})
-    headers = {"content-type": "application/json"}
-    json_response = requests.post(url, data=data, headers=headers)
-    predictions = json.loads(json_response.text)['predictions']
-    return predictions
-
-
 # load an image and predict the class
 def run_example():
+    
     # load the image
+    #input_arr = load_image('../images/validation/bed-linen-yellow/export_i0438_z1322.jpg')
     input_arr = load_image(str(sys.argv[1]))
 
-    predictions = make_prediction(input_arr)
-
+    # load model
+    model = load_model('./resnet50.h5')
+    # predict the class
+    result_prediction = model.predict(input_arr)
     labels = ["blue", "green", "striped", "yellow"]
-    print("\n")
-    print(labels[np.argmax(predictions)])
+    print(labels[np.argmax(result_prediction)])
 
 
 # entry point, run the example

@@ -16,7 +16,7 @@ for device in gpu_devices:
 datagen = ImageDataGenerator()
 
 # load and iterate training dataset
-train_it = datagen.flow_from_directory('../images/filtered-dataset/train/',  color_mode='rgb', target_size=(100, 100), class_mode='sparse', batch_size=1200)
+train_it = datagen.flow_from_directory('../../images/filtered-dataset/train/',  color_mode='rgb', target_size=(100, 100), class_mode='sparse', batch_size=1200)
 
 train_im, train_lab = train_it.next()
 
@@ -82,39 +82,12 @@ model.add(K.layers.Dropout(0.5))
 model.add(K.layers.BatchNormalization())
 model.add(K.layers.Dense(4, activation='softmax'))
 
-check_point = K.callbacks.ModelCheckpoint(filepath="../models/ModelCheckPointKerasImpleResNet50.h5",
+
+check_point = K.callbacks.ModelCheckpoint(filepath="../../models/ModelCheckPointKerasImpleResNet50.h5",
                                           monitor="val_acc", mode="max", save_best_only=True)
 
 model.compile(loss='categorical_crossentropy', optimizer=K.optimizers.RMSprop(lr=2e-5), metrics=['accuracy'])
-resnet_train = model.fit(train_set_conv, batch_size=batch_size, epochs=300, verbose=1,
+resnet_train = model.fit(train_set_conv, batch_size=batch_size, epochs=150, verbose=1,
                     validation_data=valid_set_conv, callbacks=[check_point])
 
-model.summary()
-
-model.save('../models/resnet-serving', save_format='tf')
-
-### Plot train and validation curves
-print("Plotting data...")
-loss = resnet_train.history['loss']
-v_loss = resnet_train.history['val_loss']
-acc = resnet_train.history['accuracy']
-v_acc = resnet_train.history['val_accuracy']
-epochs = range(len(loss))
-fig = plt.figure(figsize=(9, 5))
-plt.subplot(1, 2, 1)
-plt.yscale('log')
-plt.plot(epochs, loss, linestyle='--', linewidth=3, color='orange', alpha=0.7, label='Train Loss')
-plt.plot(epochs, v_loss, linestyle='-.', linewidth=2, color='lime', alpha=0.8, label='Valid Loss')
-plt.ylim(0.3, 100)
-plt.xlabel('Epochs', fontsize=11)
-plt.ylabel('Loss', fontsize=12)
-plt.legend(fontsize=12)
-plt.subplot(1, 2, 2)
-plt.plot(epochs, acc, linestyle='--', linewidth=3, color='orange', alpha=0.7, label='Train Acc')
-plt.plot(epochs, v_acc, linestyle='-.', linewidth=2, color='lime', alpha=0.8, label='Valid Acc')
-plt.xlabel('Epochs', fontsize=11)
-plt.ylabel('Accuracy', fontsize=12)
-plt.legend(fontsize=12)
-plt.tight_layout()
-plt.savefig('../export/train_acc.png', dpi=250)
-plt.show()
+model.save('./resnet50.h5', save_format='h5')
