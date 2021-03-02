@@ -90,4 +90,4 @@ model.compile(loss='categorical_crossentropy', optimizer=K.optimizers.RMSprop(lr
 resnet_train = model.fit(train_set_conv, batch_size=batch_size, epochs=150, verbose=1,
                     validation_data=valid_set_conv, callbacks=[check_point])
 
-model.save('./resnet50.h5', save_format='h5')
+model.save('./resnet50.h5', save_format='.h5')

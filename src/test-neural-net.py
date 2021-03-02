@@ -36,22 +36,22 @@ def conf_matrix(predictions):
 # create generator
 datagen = ImageDataGenerator()
 
-to_res = (100, 100)
+to_res = (125, 125)
 batch_size = 64
 
-test_it = datagen.flow_from_directory('../images/filtered-dataset/test/', color_mode='rgb', target_size=(100, 100), class_mode='sparse', batch_size=400)
+test_it = datagen.flow_from_directory('../images/garment-dataset-towel-linen/test/', color_mode='rgb', target_size=(125, 125), class_mode='sparse', batch_size=389)
 test_im, test_lab = test_it.next()
 
 test_im = test_im/255.0
 
-class_types = ['assorted-garments-blue', 'assorted-garments-green', 'bed-linen-striped', 'bed-linen-yellow']
+class_types = ['assorted-garments-blue', 'assorted-garments-green']
 
 # check the shape of the data
 print("shape of images and labels array: ", test_im.shape, test_lab.shape)
 
-test_lab_categorical = tf.keras.utils.to_categorical(test_lab, num_classes=4, dtype='uint8')
+test_lab_categorical = tf.keras.utils.to_categorical(test_lab, num_classes=2, dtype='uint8')
 
-model = load_model('../models/Keras-res-net50.h5')
+model = load_model('../models/resnet50.h5')
 
 pred_class_resnet50 = model.predict(test_im)
 

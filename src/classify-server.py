@@ -58,7 +58,8 @@ def run_example():
 
     labels = ["blue", "green", "striped", "yellow"]
     print("\n")
-    print(labels[np.argmax(predictions)])
+    print("Result: ", predictions)
+    print("Label: ", labels[np.argmax(predictions)])
 
 
 # entry point, run the example

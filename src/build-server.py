@@ -20,13 +20,13 @@ imgs = tf.reshape(imgs, (-1, 100, 100, 3)) # reshape them
 img_float = tf.cast(imgs, dtype=tf.float32) / 255 # - 0.5 # and convert them to floats
 
 to_res = (100, 100)
-model = load_model('resnet50.h5', compile=False) # load the keras model
+model = load_model('../models/resnet50.h5', compile=False) # load the keras model
 
 w = model.get_weights() # save weights to be sure that they are not messed up by the global and local initialization later on
 
 output = model(img_float) # Stack the keras model on top of the tensorflow graph -> the efficient net model is accepting base64 encoded images as a string
 
-builder = tf.saved_model.builder.SavedModelBuilder('resnet50-server')
+builder = tf.saved_model.builder.SavedModelBuilder('resnet50-server/1')
 
 tensor_info_input = tf.saved_model.utils.build_tensor_info(string_inp)
 tensor_info_output = tf.saved_model.utils.build_tensor_info(output)

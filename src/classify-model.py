@@ -40,10 +40,11 @@ def run_example():
     input_arr = load_image(str(sys.argv[1]))
 
     # load model
-    model = load_model('./resnet50.h5')
+    model = load_model('../models/resnet50.h5')
     # predict the class
     result_prediction = model.predict(input_arr)
     labels = ["blue", "green", "striped", "yellow"]
+    print("Result: ", result_prediction)
     print(labels[np.argmax(result_prediction)])
 
 
