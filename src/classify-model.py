@@ -11,13 +11,13 @@ gpu_devices = tf.config.experimental.list_physical_devices('GPU')
 for device in gpu_devices:
     tf.config.experimental.set_memory_growth(device, True)
 
-to_res = (100, 100)
+to_res = (224, 224)
 
 
 # load and prepare the image
 def load_image(filename):
     # load the image
-    img = load_img(filename, color_mode="rgb", target_size=(100, 100))
+    img = load_img(filename, color_mode="rgb", target_size=(224, 224))
 
     # img = load_img(filename, target_size=(640, 360))
     # res = cv2.resize(img, dsize=(54, 140), interpolation=cv2.INTER_CUBIC)
@@ -28,7 +28,10 @@ def load_image(filename):
     # img = img.reshape(100, 100, 3)
     # prepare pixel data
     input_arr = input_arr.astype('float32')
-    input_arr = input_arr / 255.0
+    #input_arr = input_arr / 255.0
+    # train_im = train_im/255.0
+    # train_im = tf.keras.applications.resnet50.preprocess_input(train_im)
+    input_arr = tf.keras.applications.resnet50.preprocess_input(input_arr)
     return input_arr
 
 
@@ -43,7 +46,8 @@ def run_example():
     model = load_model('../models/resnet50.h5')
     # predict the class
     result_prediction = model.predict(input_arr)
-    labels = ["blue", "green", "striped", "yellow"]
+    #labels = ["blue", "green", "striped", "yellow"]
+    labels = ['bed-linen-white', 'towel-white']
     print("Result: ", result_prediction)
     print(labels[np.argmax(result_prediction)])
 
