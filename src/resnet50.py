@@ -17,14 +17,13 @@ for device in gpu_devices:
 
 #tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)
 
-
-
-
 # Settings
-setting_resolution = 125
+setting_resolution = 224
 setting_batch_size = 64
-setting_epochs = 150
+setting_epochs = 100
+setting_frozen = True
 setting_dataset_size = 1643
+setting_path = '../images/garment-dataset-towel-linen/train/'
 
 print("\n=== IMPORT DATA =======================\n")
 
@@ -33,12 +32,12 @@ print("\n=== IMPORT DATA =======================\n")
 #       The batch size is the size of the dataset, and _does not_ match the later one.
 datagen = ImageDataGenerator()
 train_it = datagen.flow_from_directory(
-    '../images/garment-dataset-towel-linen/train/',
+    setting_path,
     color_mode='rgb',
     target_size=(setting_resolution, setting_resolution),
     class_mode='sparse',
     batch_size=setting_dataset_size)
-print(train_it.batch_size)
+print("Train data batch size: ", train_it.batch_size)
 train_im, train_lab = train_it.next()
 
 # Normalize the images to pixel values (0, 1)
@@ -78,13 +77,21 @@ valid_set_conv = valid_DataGen.flow(valid_im, valid_lab, batch_size=setting_batc
 
 # Defining model
 print("\n=== DEFINE MODEL ======================\n")
+print("Defining input shape...")
 input_shape = K.Input(shape=(setting_resolution, setting_resolution, 3))
-res_model = K.applications.ResNet50(include_top=False, weights="imagenet", input_tensor=input_shape)
+print("Shape: ", input_shape)
+print("Defining ResNet50...")
+
+# Source: https://keras.io/api/applications/resnet/#resnet50-function
+#res_model = K.applications.ResNet50(include_top=True, weights="imagenet")
+res_model = K.applications.ResNet50(include_top=False, weights="imagenet", input_tensor=input_shape, pooling=max, classes=2)
 
 # If freeze layers in model
-#for layer in res_model.layers:
-#    layer.trainable = False
+if setting_frozen:
+    for layer in res_model.layers:
+        layer.trainable = False
 
+print("Defining classification layer...")
 to_res = (setting_resolution, setting_resolution)
 model = K.models.Sequential()
 model.add(K.layers.Lambda(lambda image: tf.image.resize(image, to_res)))
@@ -107,20 +114,36 @@ check_point = K.callbacks.ModelCheckpoint(filepath="../models/resnet50-checkpoin
 
 # Compile model
 model.compile(loss='categorical_crossentropy', optimizer=K.optimizers.RMSprop(lr=2e-5), metrics=['accuracy'])
+response = input("Do you want to start training? (Y/n) ")
+if response == "n":
+    exit(0)
 
 # Train model
 print("\n=== TRAIN MODEL =======================\n")
 resnet_train = model.fit(train_set_conv, batch_size=setting_batch_size, epochs=setting_epochs, verbose=1,
                     validation_data=valid_set_conv, callbacks=[check_point])
+model.summary()
 
 # Export model
-model.summary()
 model.save('../models/resnet50.h5', save_format='h5')
+
+# Evaluate model
+print("\n=== EVALUATE MODEL ====================\n")
+test_it = datagen.flow_from_directory(
+    '../images/garment-dataset-towel-linen/test/',
+    color_mode='rgb',
+    target_size=(setting_resolution, setting_resolution),
+    class_mode='sparse',
+    batch_size=600)
+test_im, test_lab = test_it.next()
+test_loss, test_acc = model.evaluate(test_im,  test_lab, verbose=2)
+print('\nTest accuracy:', test_acc)
+
 
 # Optional: Plot train and validation curves
 verbose = True
 if verbose:
-    print("Plotting data...")
+    print("\n=== PLOT MODEL ========================\n")
     loss = resnet_train.history['loss']
     v_loss = resnet_train.history['val_loss']
     acc = resnet_train.history['accuracy']
