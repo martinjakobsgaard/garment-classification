@@ -9,50 +9,52 @@ import tensorflow.keras as K
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.image import ImageDataGenerator
 
-import tensorflow as tf
-
 from sklearn.metrics import confusion_matrix, classification_report
 import seaborn as sns
 
+# Gpu warning fix
 gpu_devices = tf.config.experimental.list_physical_devices('GPU')
 for device in gpu_devices:
     tf.config.experimental.set_memory_growth(device, True)
 
 
-def conf_matrix(predictions):
-    ''' Plots conf. matrix and classification report '''
-    cm=confusion_matrix(test_lab, np.argmax(np.round(predictions), axis=1))
+def conf_matrix(predictions, labels):
+    cm=confusion_matrix(labels, np.argmax(np.round(predictions), axis=1))
     print("Classification Report:\n")
     cr=classification_report(test_lab,
                                 np.argmax(np.round(predictions), axis=1),
-                                target_names=[class_types[i] for i in range(len(class_types))])
+                                target_names=[setting_class_types[i] for i in range(len(setting_class_types))])
     print(cr)
-    plt.figure(figsize=(12,12))
-    sns_hmp = sns.heatmap(cm, annot=True, xticklabels = [class_types[i] for i in range(len(class_types))],
-                yticklabels = [class_types[i] for i in range(len(class_types))], fmt="d")
+    plt.figure(figsize=(12, 12))
+    sns_hmp = sns.heatmap(cm, annot=True, xticklabels = [setting_class_types[i] for i in range(len(setting_class_types))],
+                yticklabels = [setting_class_types[i] for i in range(len(setting_class_types))], fmt="d")
     fig = sns_hmp.get_figure()
 
 
-# create generator
-datagen = ImageDataGenerator()
+# Settings
+setting_resolution = (224, 224)
+setting_batch_size = 389
+setting_class_count = 2
+setting_class_types = ['bed-linen-white', 'towel-white']
 
-to_res = (125, 125)
-batch_size = 64
-
-test_it = datagen.flow_from_directory('../images/garment-dataset-towel-linen/test/', color_mode='rgb', target_size=(125, 125), class_mode='sparse', batch_size=389)
-test_im, test_lab = test_it.next()
-
-test_im = test_im/255.0
-
-class_types = ['assorted-garments-blue', 'assorted-garments-green']
-
-# check the shape of the data
-print("shape of images and labels array: ", test_im.shape, test_lab.shape)
-
-test_lab_categorical = tf.keras.utils.to_categorical(test_lab, num_classes=2, dtype='uint8')
-
+# Load model
+to_res = setting_resolution
 model = load_model('../models/resnet50.h5')
 
-pred_class_resnet50 = model.predict(test_im)
+# Fetch data
+datagen = ImageDataGenerator()
+test_it = datagen.flow_from_directory('../images/garment-dataset-towel-linen/test/', color_mode='rgb', target_size=setting_resolution, class_mode='sparse', batch_size=setting_batch_size)
+test_im, test_lab = test_it.next()
+test_im = tf.keras.applications.resnet50.preprocess_input(test_im)
+test_lab_categorical = tf.keras.utils.to_categorical(test_lab, num_classes=setting_class_count, dtype='uint8')
 
-conf_matrix(pred_class_resnet50)
+# Get predictions
+predictions = [[0,0]]
+for im in test_im:
+    format_test_im = im[None, :, :, :]
+    prediction = model.predict(format_test_im)
+    predictions = np.append(predictions,prediction,axis=0)
+predictions = np.delete(predictions, 0, 0)
+
+# Print results
+conf_matrix(predictions, test_lab)
