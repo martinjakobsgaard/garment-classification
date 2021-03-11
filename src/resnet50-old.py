@@ -12,18 +12,18 @@ for device in gpu_devices:
     tf.config.experimental.set_memory_growth(device, True)
 
 # Settings
-setting_resolution = 224
+setting_resolution = 100
 setting_batch_size = 64
-setting_epochs = 100
-setting_frozen = True # <- was true
-setting_frozen_min = 0
+setting_epochs = 200
+setting_frozen = False # <- was true
+setting_frozen_min = 2
 setting_frozen_max = -1 # max
 setting_class_count = 4
-setting_dataset_size = 6976
-setting_path = '../images/garment-dataset-2-no-pillowcases/train/'
+setting_dataset_size = 1471
+setting_path = '../images/linen-draft-dataset/train/'
 
 # Generate export name unique to training
-export_suffix = "resnet50_no-pillowcases"
+export_suffix = ""
 export_suffix += ("_res" + str(setting_resolution))
 export_suffix += ("_batch" + str(setting_batch_size))
 export_suffix += ("_epoch" + str(setting_epochs))
@@ -92,6 +92,7 @@ print("Defining ResNet50...")
 # Source: https://keras.io/api/applications/resnet/#resnet50-function
 #res_model = K.applications.ResNet50(include_top=True, weights="imagenet")
 res_model = K.applications.ResNet50(include_top=False, weights="imagenet", input_tensor=input_shape, pooling=max, classes=setting_class_count) # <- Good input
+
 #res_model = K.applications.ResNet50(include_top=True, weights=None, input_tensor=input_shape, pooling=max, classes=setting_class_count) # <- Good input
 
 # res_model = K.applications.ResNet50(include_top=False, weights="imagenet", input_tensor=input_shape, pooling=max, classes=setting_class_count) # <- Good input

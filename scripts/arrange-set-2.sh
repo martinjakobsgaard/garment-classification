@@ -34,7 +34,7 @@ do
         for file in ${subdirectory}/*
         do
             rand1000=$((1 + $RANDOM % 1000 ))
-            if [[ $rand1000 -lt 800 ]]
+            if [[ $rand1000 -lt 850 ]]
             then
                 cp $file $output/train/$(basename -- $subdirectory)
             else

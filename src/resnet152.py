@@ -18,12 +18,12 @@ setting_epochs = 100
 setting_frozen = True # <- was true
 setting_frozen_min = 0
 setting_frozen_max = -1 # max
-setting_class_count = 4
-setting_dataset_size = 6976
-setting_path = '../images/garment-dataset-2-no-pillowcases/train/'
+setting_class_count = 5
+setting_dataset_size = 8743
+setting_path = '../images/garment-dataset-2/train/'
 
 # Generate export name unique to training
-export_suffix = "resnet50_no-pillowcases"
+export_suffix = "resnet152"
 export_suffix += ("_res" + str(setting_resolution))
 export_suffix += ("_batch" + str(setting_batch_size))
 export_suffix += ("_epoch" + str(setting_epochs))
@@ -49,7 +49,8 @@ train_im, train_lab = train_it.next()
 
 # Normalize the images to pixel values (0, 1)
 #train_im = train_im/255.0
-train_im = tf.keras.applications.resnet50.preprocess_input(train_im)
+train_im = tf.keras.applications.resnet.preprocess_input(train_im)
+    #resnet152.preprocess_input(train_im)
 
 # Inspect imported data
 print("train_im type:\t\t", type(train_im))
@@ -87,11 +88,11 @@ print("\n=== DEFINE MODEL ======================\n")
 print("Defining input shape...")
 input_shape = K.Input(shape=(setting_resolution, setting_resolution, 3))
 print("Shape: ", input_shape)
-print("Defining ResNet50...")
+print("Defining ResNet1052...")
 
-# Source: https://keras.io/api/applications/resnet/#resnet50-function
+# Source: https://keras.io/api/applications/resnet/#resnet152-function
 #res_model = K.applications.ResNet50(include_top=True, weights="imagenet")
-res_model = K.applications.ResNet50(include_top=False, weights="imagenet", input_tensor=input_shape, pooling=max, classes=setting_class_count) # <- Good input
+res_model = K.applications.ResNet152(include_top=False, weights="imagenet", input_tensor=input_shape, pooling=max, classes=setting_class_count) # <- Good input
 #res_model = K.applications.ResNet50(include_top=True, weights=None, input_tensor=input_shape, pooling=max, classes=setting_class_count) # <- Good input
 
 # res_model = K.applications.ResNet50(include_top=False, weights="imagenet", input_tensor=input_shape, pooling=max, classes=setting_class_count) # <- Good input
@@ -126,7 +127,7 @@ model.add(K.layers.Dropout(0.5))
 model.add(K.layers.BatchNormalization())
 model.add(K.layers.Dense(setting_class_count, activation='softmax'))
 
-check_point = K.callbacks.ModelCheckpoint(filepath="../models/resnet50" + export_suffix + "-checkpoint.h5",
+check_point = K.callbacks.ModelCheckpoint(filepath="../models/resnet152" + export_suffix + "-checkpoint.h5",
                                           monitor="val_accuracy", mode="max", save_best_only=True)
 
 # Compile model
@@ -140,9 +141,12 @@ print("\n=== TRAIN MODEL =======================\n")
 resnet_train = model.fit(train_set_conv, batch_size=setting_batch_size, epochs=setting_epochs, verbose=1,
                     validation_data=valid_set_conv, callbacks=[check_point])
 model.summary()
+val_acc_per_epoch = resnet_train.history['val_accuracy']
+val_acc_best = max(val_acc_per_epoch)
+print("Best val acc:", val_acc_best)
 
 # Export model
-model_export_name = "../models/resnet50" + export_suffix + ".h5"
+model_export_name = "../models/resnet152" + export_suffix + ".h5"
 model.save(model_export_name, save_format='h5')
 
 # Optional: Plot train and validation curves
