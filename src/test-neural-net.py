@@ -33,23 +33,23 @@ def conf_matrix(predictions, labels):
 
 # Settings
 setting_resolution = (224, 224)
-setting_batch_size = 1494
-setting_class_count = 5
-setting_class_types = ['bed-linen-white', 'bed-linen-yellow-stripe', 'blue-pants', 'green-pants', 'towel-white']
+setting_batch_size = 1201
+setting_class_count = 4
+setting_class_types = ['bed-linen-yellow-stripe', 'blue-pants', 'green-pants', 'towel-white']
 
 # Load model
 to_res = setting_resolution
-model = load_model('../models/resnet50_res224_batch64_epoch150_frozenTrueindex0--1_class5_size8743-checkpoint.h5')
+model = load_model('../models/RESNET50-NO-LINEN_res224_batch64_epoch50_frozen0--1_class4_size7029.h5')
 
 # Fetch data
 datagen = ImageDataGenerator()
-test_it = datagen.flow_from_directory('../images/garment-dataset-2/test/', color_mode='rgb', target_size=setting_resolution, class_mode='sparse', batch_size=setting_batch_size)
+test_it = datagen.flow_from_directory('../images/garment-dataset-2-no-linen/test/', color_mode='rgb', target_size=setting_resolution, class_mode='sparse', batch_size=setting_batch_size)
 test_im, test_lab = test_it.next()
 test_im = tf.keras.applications.resnet50.preprocess_input(test_im)
 test_lab_categorical = tf.keras.utils.to_categorical(test_lab, num_classes=setting_class_count, dtype='uint8')
 
 # Get predictions
-predictions = [[0, 0, 0, 0, 0]]
+predictions = [[0, 0, 0, 0]]
 for im in test_im:
     format_test_im = im[None, :, :, :]
     prediction = model.predict(format_test_im)
