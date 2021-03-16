@@ -23,7 +23,8 @@ def data_import(argument_path, argument_size, argument_resolution, argument_clas
         target_size=(argument_resolution, argument_resolution),
         class_mode='sparse',
         batch_size=argument_size)
-    print("Train data batch size: ", train_it.batch_size)
+    print("Train data batch size: ", train_data_iterator.batch_size)
+    print("Number of classes: ", train_data_iterator.num_classes)
     train_images, train_labels = train_data_iterator.next()
 
     train_images = tf.keras.applications.resnet50.preprocess_input(train_images)
@@ -50,11 +51,11 @@ def data_import(argument_path, argument_size, argument_resolution, argument_clas
         horizontal_flip=False)
 
     validation_data_generator = tf.keras.preprocessing.image.ImageDataGenerator()
-    train_image_set = train_data_generator.flow(train_images, train_labels, batch_size=setting_batch_size)
-    validation_image_set = validation_data_generator.flow(valid_im, valid_lab, batch_size=setting_batch_size)
+    result_train_image_set = train_data_generator.flow(train_images, train_labels, batch_size=setting_batch_size)
+    result_validation_image_set = validation_data_generator.flow(validation_images, validation_labels, batch_size=setting_batch_size)
     print("Done!")
 
-    return train_image_set, validation_image_set
+    return result_train_image_set, result_validation_image_set
 
 
 # Defining backbone
@@ -65,53 +66,52 @@ def define_backbone_resnet50(argument_resolution, argument_class_count, argument
 
     print("Define ResNet50...")
     # Source: https://keras.io/api/applications/resnet/#resnet50-function
-    backbone = K.applications.ResNet50(include_top=False, weights="imagenet", input_tensor=input_shape, pooling=max, classes=argument_class_count) # <- Good input
+    result_backbone = K.applications.ResNet50(include_top=False, weights="imagenet", input_tensor=input_shape, pooling=max, classes=argument_class_count) # <- Good input
 
-    print("Freezing layers...")
     # If freeze layers in model
     if argument_frozen_min != argument_frozen_max:
         if argument_frozen_max == -1:
-            print("Freezing layer " + argument_frozen_min + " -> max!")
-            for layer in resnet_model.layers[argument_frozen_min:]:
+            print("Freezing layer " + str(argument_frozen_min) + " -> max!")
+            for layer in result_backbone.layers[argument_frozen_min:]:
                 layer.trainable = False
         else:
-            print("Freezing layer " + argument_frozen_min + " -> " + argument_frozen_max + '!')
-            for layer in res_model.layers[argument_frozen_min:argument_frozen_max]:
+            print("Freezing layer " + str(argument_frozen_min) + " -> " + str(argument_frozen_max) + '!')
+            for layer in result_backbone.layers[argument_frozen_min:argument_frozen_max]:
                 layer.trainable = False
     else:
         print("Not freezing any layers...")
 
-    return backbone
+    return result_backbone
 
 
 # Build model
 def build_model(argument_backbone, argument_resolution, argument_class_count):
     print("Defining model...")
     to_res = (argument_resolution, argument_resolution)
-    model = K.models.Sequential()
-    model.add(K.layers.Lambda(lambda image: tf.image.resize(image, to_res)))
+    result_model = K.models.Sequential()
+    result_model.add(K.layers.Lambda(lambda image: tf.image.resize(image, to_res)))
     #model.add(res_model)
-    model.add(argument_backbone)
-    model.add(K.layers.Flatten())
-    model.add(K.layers.BatchNormalization())
-    model.add(K.layers.Dense(256, activation='relu'))
-    model.add(K.layers.Dropout(0.5))
-    model.add(K.layers.BatchNormalization())
-    model.add(K.layers.Dense(128, activation='relu'))
-    model.add(K.layers.Dropout(0.5))
-    model.add(K.layers.BatchNormalization())
-    model.add(K.layers.Dense(64, activation='relu'))
-    model.add(K.layers.Dropout(0.5))
-    model.add(K.layers.BatchNormalization())
-    model.add(K.layers.Dense(argument_class_count, activation='softmax'))
+    result_model.add(argument_backbone)
+    result_model.add(K.layers.Flatten())
+    result_model.add(K.layers.BatchNormalization())
+    result_model.add(K.layers.Dense(256, activation='relu'))
+    result_model.add(K.layers.Dropout(0.5))
+    result_model.add(K.layers.BatchNormalization())
+    result_model.add(K.layers.Dense(128, activation='relu'))
+    result_model.add(K.layers.Dropout(0.5))
+    result_model.add(K.layers.BatchNormalization())
+    result_model.add(K.layers.Dense(64, activation='relu'))
+    result_model.add(K.layers.Dropout(0.5))
+    result_model.add(K.layers.BatchNormalization())
+    result_model.add(K.layers.Dense(argument_class_count, activation='softmax'))
 
-    check_point = K.callbacks.ModelCheckpoint(filepath="../models/" + global_export_suffix + "-checkpoint.h5", monitor="val_accuracy", mode="max", save_best_only=True)
+    result_checkpoint = K.callbacks.ModelCheckpoint(filepath="../models/" + global_export_suffix + "-checkpoint.h5", monitor="val_accuracy", mode="max", save_best_only=True)
 
     # Compile model
     print("Compiling model...")
-    model.compile(loss='categorical_crossentropy', optimizer=K.optimizers.RMSprop(lr=2e-5), metrics=['accuracy'])
+    result_model.compile(loss='categorical_crossentropy', optimizer=K.optimizers.RMSprop(lr=2e-5), metrics=['accuracy'])
 
-    return model, checkpoint
+    return result_model, result_checkpoint
 
 
 # Plot data
@@ -145,23 +145,22 @@ def plot_history(model_history):
 
 if __name__ == '__main__':
     # Settings
-    setting_title = "resnet50"
+    setting_title = "RESNET50-NO-LINEN"
     setting_resolution = 224
     setting_batch_size = 64
-    setting_epochs = 100
+    setting_epochs = 50
     setting_frozen_min = 0
     setting_frozen_max = -1  # max
-    setting_class_count = 5
-    setting_dataset_size = 8743
-    setting_path = '../images/garment-dataset-2/train/'
+    setting_class_count = 4
+    setting_dataset_size = 7029
+    setting_path = '../images/garment-dataset-2-no-linen/train/'
 
     # Generate export name unique to training
     global_export_suffix = setting_title
     global_export_suffix += ("_res" + str(setting_resolution))
     global_export_suffix += ("_batch" + str(setting_batch_size))
     global_export_suffix += ("_epoch" + str(setting_epochs))
-    global_export_suffix += ("_frozen" + str(setting_frozen))
-    global_export_suffix += ("index" + str(setting_frozen_min) + "-" + str(setting_frozen_max))
+    global_export_suffix += ("_frozen" + str(setting_frozen_min) + "-" + str(setting_frozen_max))
     global_export_suffix += ("_class" + str(setting_class_count))
     global_export_suffix += ("_size" + str(setting_dataset_size))
 
@@ -176,12 +175,13 @@ if __name__ == '__main__':
         exit(0)
 
     # Train model
-    resnet_train = model.fit(train_image_set,
-                             batch_size=setting_batch_size,
-                             epochs=setting_epochs,
-                             verbose=1,
-                             validation_data=validation_image_set,
-                             callbacks=[checkpoint])
+    model_train = model.fit(
+        train_image_set,
+        batch_size=setting_batch_size,
+        epochs=setting_epochs,
+        verbose=1,
+        validation_data=validation_image_set,
+        callbacks=[checkpoint])
     model.summary()
 
     # Optional: plot model
