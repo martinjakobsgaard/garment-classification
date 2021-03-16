@@ -15,12 +15,14 @@ imgs_map = tf.map_fn(
     dtype=tf.uint8
 ) # decode the jpeg
 imgs_map.set_shape((None, None, None, 3))
-imgs = tf.image.resize_images(imgs_map, [100, 100]) # resize images
-imgs = tf.reshape(imgs, (-1, 100, 100, 3)) # reshape them
-img_float = tf.cast(imgs, dtype=tf.float32) / 255 # - 0.5 # and convert them to floats
+imgs = tf.image.resize_images(imgs_map, [224, 224]) # resize images
+imgs = tf.reshape(imgs, (-1, 224, 224, 3)) # reshape them
+#img_float = tf.cast(imgs, dtype=tf.float32) / 255 # - 0.5 # and convert them to floats
+img_float = tf.cast(imgs, dtype=tf.float32)
+img_float = tf.keras.applications.resnet50.preprocess_input(img_float)
 
-to_res = (100, 100)
-model = load_model('../models/resnet50.h5', compile=False) # load the keras model
+to_res = (224, 224)
+model = load_model('../models/RESNET50-NO-LINEN_res224_batch64_epoch50_frozen0--1_class4_size7029.h5', compile=False) # load the keras model
 
 w = model.get_weights() # save weights to be sure that they are not messed up by the global and local initialization later on
 
